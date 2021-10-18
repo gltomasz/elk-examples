@@ -1,19 +1,21 @@
 package com.example.demo;
 
+import co.elastic.apm.attach.ElasticApmAttacher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.message.Message;
-import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.apache.logging.log4j.message.StringMapMessage;
 import org.slf4j.MDC;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
@@ -25,6 +27,11 @@ public class DemoApplication implements CommandLineRunner {
     private static final Logger logger = LogManager.getLogger(DemoApplication.class);
 
     public static void main(String[] args) {
+        Map<String, String> apmConfiguration = new HashMap<>();
+        apmConfiguration.put("server_urls", "http://localhost:8200");
+        apmConfiguration.put("enable_log_correlation", "true");
+        ElasticApmAttacher.attach(apmConfiguration);
+        ElasticApmAttacher.attach();
         SpringApplication.run(DemoApplication.class, args);
     }
 
@@ -62,8 +69,15 @@ public class DemoApplication implements CommandLineRunner {
     @RestController
     public static class MyRest {
         @GetMapping
-        String get() throws UnknownHostException {
+        String get() throws UnknownHostException, InterruptedException {
+            Thread.sleep(ThreadLocalRandom.current().nextInt(100,800));
             return "Hello from " + InetAddress.getLocalHost().getHostName();
+        }
+
+        @GetMapping("/error")
+        ResponseEntity<Void> error() {
+            logger.error("error!!!");
+            throw new RuntimeException("error");
         }
     }
 
