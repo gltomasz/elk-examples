@@ -6,6 +6,8 @@ services:
         hostname: elasticsearch
         environment:
             - "discovery.type=single-node"
+            - "ELASTIC_PASSWORD=changeme"
+            - "xpack.security.enabled=true"
         ports:
             - 9200:9200
             - 9300:9300
@@ -19,6 +21,9 @@ services:
             - elasticsearch:elasticsearch
         depends_on:
           - elasticsearch
+        environment:
+          - "ELASTICSEARCH_USERNAME=elastic"
+          - "ELASTICSEARCH_PASSWORD=changeme"
     logstash:
         image: docker.elastic.co/logstash/logstash:7.15.0
         container_name: logstash
@@ -46,6 +51,8 @@ services:
             -E apm-server.kibana.enabled=true
             -E apm-server.kibana.host=kibana:5601
             -E output.elasticsearch.hosts=["elasticsearch:9200"]
+            -E output.elasticsearch.username=elastic
+            -E output.elasticsearch.password=changeme
         healthcheck:
             interval: 10s
             retries: 12

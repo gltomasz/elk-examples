@@ -22,54 +22,19 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
-public class DemoApplication implements CommandLineRunner {
+public class DemoApplication {
 
     private static final Logger logger = LogManager.getLogger(DemoApplication.class);
 
     public static void main(String[] args) {
-        Map<String, String> apmConfiguration = new HashMap<>();
-        apmConfiguration.put("server_urls", "http://localhost:8200");
-        apmConfiguration.put("enable_log_correlation", "true");
-        ElasticApmAttacher.attach(apmConfiguration);
-        ElasticApmAttacher.attach();
         SpringApplication.run(DemoApplication.class, args);
-    }
-
-    @Override
-    public void run(String... args) throws Exception {
-        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorService.scheduleWithFixedDelay(() -> {
-            ThreadLocalRandom current = ThreadLocalRandom.current();
-            MDC.remove("unit");
-            MDC.put("unit", "0911-00");
-            logger.info(new StringMapMessage()
-                    .with("message", "Imported data")
-                    .with("opType", "import")
-                    .with("duration",  current.nextInt(10000)));
-            logger.info(new StringMapMessage()
-                    .with("message", "Exported data")
-                    .with("opType", "export")
-                    .with("duration",  current.nextInt(10000)));
-
-            MDC.remove("unit");
-            MDC.put("unit", "1828-00");
-
-            logger.info(new StringMapMessage()
-                    .with("message", "Imported data")
-                    .with("opType", "import")
-                    .with("duration",  current.nextInt(10000)));
-            logger.info(new StringMapMessage()
-                    .with("message", "Exported data")
-                    .with("opType", "export")
-                    .with("duration",  current.nextInt(10000)));
-
-        }, 0, 5, TimeUnit.SECONDS);
     }
 
     @RestController
     public static class MyRest {
         @GetMapping
-        String get() throws UnknownHostException, InterruptedException {
+        String get(String request) throws UnknownHostException, InterruptedException {
+            logger.info("Get: " + request);
             Thread.sleep(ThreadLocalRandom.current().nextInt(100,800));
             return "Hello from " + InetAddress.getLocalHost().getHostName();
         }
@@ -80,5 +45,4 @@ public class DemoApplication implements CommandLineRunner {
             throw new RuntimeException("error");
         }
     }
-
 }
